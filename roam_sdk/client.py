@@ -5,12 +5,50 @@ from pydantic import BaseModel
 
 # Import generated gRPC code relative to this file
 # Note: real implementation would need to handle import paths carefully
+# To regenerate: python -m grpc_tools.protoc -I../../roam-proto/src --python_out=. --grpc_python_out=. ../../roam-proto/src/v1/agent/service.proto
+# Then fix imports in service_pb2_grpc.py: from . import service_pb2
 try:
-    from .v1 import service_pb2, service_pb2_grpc  # type: ignore
+    from .v1.agent import service_pb2, service_pb2_grpc  # type: ignore
 except ImportError:
     # Use mocks/placeholders if protos are not generated yet
     service_pb2 = None
     service_pb2_grpc = None
+
+
+class _APIKeyInterceptor(
+    grpc.UnaryUnaryClientInterceptor,
+    grpc.UnaryStreamClientInterceptor,
+    grpc.StreamUnaryClientInterceptor,
+    grpc.StreamStreamClientInterceptor,
+):
+    def __init__(self, key, value):
+        self._key = key
+        self._value = value
+
+    def _intercept_call(self, continuation, client_call_details, request_iterator):
+        metadata = (
+            list(client_call_details.metadata) if client_call_details.metadata else []
+        )
+        metadata.append((self._key, self._value))
+
+        updated_details = client_call_details._replace(metadata=metadata)
+        return continuation(updated_details, request_iterator)
+
+    def intercept_unary_unary(self, continuation, client_call_details, request):
+        return self._intercept_call(continuation, client_call_details, request)
+
+    def intercept_unary_stream(self, continuation, client_call_details, request):
+        return self._intercept_call(continuation, client_call_details, request)
+
+    def intercept_stream_unary(
+        self, continuation, client_call_details, request_iterator
+    ):
+        return self._intercept_call(continuation, client_call_details, request_iterator)
+
+    def intercept_stream_stream(
+        self, continuation, client_call_details, request_iterator
+    ):
+        return self._intercept_call(continuation, client_call_details, request_iterator)
 
 
 class RoamClient:
@@ -28,7 +66,14 @@ class RoamClient:
 
     def connect(self):
         """Establishes gRPC channel."""
-        self.channel = grpc.insecure_channel(self.address)
+        base_channel = grpc.insecure_channel(self.address)
+
+        if self.api_key:
+            interceptor = _APIKeyInterceptor("x-roam-api-key", self.api_key)
+            self.channel = grpc.intercept_channel(base_channel, interceptor)
+        else:
+            self.channel = base_channel
+
         if service_pb2_grpc:
             self.stub = service_pb2_grpc.AgentServiceStub(self.channel)
         else:
