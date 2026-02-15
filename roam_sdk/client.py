@@ -31,6 +31,10 @@ class RoamClient:
         self.channel = grpc.insecure_channel(self.address)
         if service_pb2_grpc:
             self.stub = service_pb2_grpc.AgentServiceStub(self.channel)
+        else:
+            raise ImportError(
+                "gRPC stubs not found. Run 'roam proto gen' to generate python bindings."
+            )
         self.connected = True
         return True
 

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from pydantic import BaseModel, Field
 
@@ -59,3 +61,13 @@ def test_decorator_metadata():
 
     # Verify execution still works
     assert search_tool("test") == "Results for test"
+
+
+def test_connect_missing_stubs():
+    """Test that connection fails appropriately when stubs are missing."""
+    # Mock that the gRPC module is None (simulating import error)
+    with patch("roam_sdk.client.service_pb2_grpc", None):
+        client = RoamClient()
+        # The client should suggest running the generation command
+        with pytest.raises(ImportError, match="Run 'roam proto gen'"):
+            client.connect()
