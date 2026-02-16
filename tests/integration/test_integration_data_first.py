@@ -15,7 +15,9 @@ def test_data_first_valid(roaming_client, fake_user, db_session):
 
     UserDeclarativeBase.save(db_session, fake_user)
     req = service_pb2.ConnectRequest(
-        agent_id="test-data-first", version="0.1", mode=service_pb2.SchemaMode.DATA_FIRST
+        agent_id="test-data-first",
+        version="0.1",
+        mode=service_pb2.SchemaMode.DATA_FIRST,
     )
     roaming_client.stub.Register(req)
     query = "SELECT id, name FROM users LIMIT 1"
