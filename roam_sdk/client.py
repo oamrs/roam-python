@@ -150,11 +150,15 @@ class RoamClient:
         if self.mode == service_pb2.SchemaMode.CODE_FIRST:
             import re
 
-            # Basic extraction of table name (Word after FROM)
+            # Basic extraction of table names (Words after FROM or JOIN)
             # NOTE: This is a simplistic check for the SDK PoC.
-            # Real implementation would use sqlglot or similar parsing.
-            match = re.search(r"FROM\s+([a-zA-Z0-9_]+)", query, re.IGNORECASE)
-            if match:
+            # Real implementation must use sqlglot or rely on the Roam Backend validation.
+            # Find all table references
+            matches = re.finditer(
+                r"(?:FROM|JOIN)\s+([a-zA-Z0-9_]+)", query, re.IGNORECASE
+            )
+
+            for match in matches:
                 table_name = match.group(1)
                 if table_name not in self.registered_tables:
                     raise ValueError(

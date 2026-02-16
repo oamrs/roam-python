@@ -46,3 +46,35 @@ def test_code_first_restricts_unknown_tables(roaming_client):
         ValueError, match="Table 'unregistered_table' is not registered"
     ):
         roaming_client.execute_query(query)
+
+
+def test_code_first_fails_mixed_join(roaming_client, db_session, fake_user):
+    """
+    GIVEN a client in CODE_FIRST mode
+    WHEN executing a JOIN query between a registered table (users)
+    AND an unregistered table (organizations)
+    THEN it should FAIL (Client-side validation)
+    """
+    from tests.conftest import OrganizationDeclarativeBase, UserDeclarativeBase
+
+    # Setup
+    org = OrganizationDeclarativeBase.save(db_session, name="Prohibited Corp")
+    fake_user.organization_id = org.id
+    UserDeclarativeBase.save(db_session, fake_user)
+
+    roaming_client.register(
+        agent_id="test-code-first-join-fail",
+        version="0.1",
+        mode=service_pb2.SchemaMode.CODE_FIRST,
+    )
+
+    # Register Users ONLY
+    roaming_client.register_model(UserDeclarativeBase)
+    # Organization is NOT registered
+
+    # Query uses "users" (valid) and "organizations" (invalid)
+    query = "SELECT * FROM users JOIN organizations ON users.organization_id = organizations.id"
+
+    # Expectation: Should fail because 'organizations' is not registered
+    with pytest.raises(ValueError, match="not registered"):
+        roaming_client.execute_query(query)
