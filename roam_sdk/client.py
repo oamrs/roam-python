@@ -66,6 +66,7 @@ class RoamClient:
         self.stub = None
         self.connected = False
         self.mode = None
+        self.registered_tables = set()
 
     def connect(self):
         """Establishes gRPC channel."""
@@ -128,6 +129,10 @@ class RoamClient:
                 )
 
         # Here we would convert the model to schema and register it
+        # Keep track of registered tables for local validation
+        if hasattr(model_class, "__tablename__"):
+            self.registered_tables.add(model_class.__tablename__)
+
         # For now, just return True
         return True
 
@@ -138,6 +143,23 @@ class RoamClient:
         """
         if not self.connected:
             raise RuntimeError("Client not connected")
+
+        # CODE_FIRST Validation (Client-side Pre-check)
+        # NOTE: The authoritative validation happens on the backend. 
+        # This check is for immediate developer feedback (DX).
+        if self.mode == service_pb2.SchemaMode.CODE_FIRST:
+            import re
+
+            # Basic extraction of table name (Word after FROM)
+            # NOTE: This is a simplistic check for the SDK PoC.
+            # Real implementation would use sqlglot or similar parsing.
+            match = re.search(r"FROM\s+([a-zA-Z0-9_]+)", query, re.IGNORECASE)
+            if match:
+                table_name = match.group(1)
+                if table_name not in self.registered_tables:
+                    raise ValueError(
+                        f"Table '{table_name}' is not registered. In CODE_FIRST mode, only registered models can be queried."
+                    )
 
         # Create the Query Service stub if not already created
         # In a real app, we might do this in connect(), but v1.query might be optional
