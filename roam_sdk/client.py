@@ -145,7 +145,7 @@ class RoamClient:
             raise RuntimeError("Client not connected")
 
         # CODE_FIRST Validation (Client-side Pre-check)
-        # NOTE: The authoritative validation happens on the backend. 
+        # NOTE: The authoritative validation happens on the backend.
         # This check is for immediate developer feedback (DX).
         if self.mode == service_pb2.SchemaMode.CODE_FIRST:
             import re
