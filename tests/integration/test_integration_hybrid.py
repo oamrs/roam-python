@@ -74,7 +74,7 @@ def test_hybrid_queries_unregistered_table(roaming_client, db_session):
 def test_hybrid_join_query(roaming_client, db_session, fake_user):
     """
     GIVEN a client in HYBRID mode
-    WHEN executing a JOIN query between a registered table (users) 
+    WHEN executing a JOIN query between a registered table (users)
     AND an unregistered table (organizations)
     THEN it should succeed
     """
@@ -82,18 +82,16 @@ def test_hybrid_join_query(roaming_client, db_session, fake_user):
 
     # 1. Setup Relationship Data
     org = OrganizationDeclarativeBase.save(db_session, name="Hybrid Join Corp")
-    
+
     # Assign user to org
     fake_user.organization_id = org.id
     UserDeclarativeBase.save(db_session, fake_user)
 
     # 2. Register Client in HYBRID mode
     roaming_client.register(
-        agent_id="test-hybrid-join",
-        version="0.1",
-        mode=service_pb2.SchemaMode.HYBRID
+        agent_id="test-hybrid-join", version="0.1", mode=service_pb2.SchemaMode.HYBRID
     )
-    
+
     # Register only Users (Organizations is left to introspection)
     roaming_client.register_model(UserDeclarativeBase)
 
