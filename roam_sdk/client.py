@@ -120,11 +120,11 @@ class RoamClient:
         if not hasattr(model_class, "to_roam_schema"):
             raise ValueError("Model must inherit from RoamDeclarativeBase")
 
-        # Check for Check for DATA_ONLY mode violation
+        # Check for Check for DATA_FIRST mode violation
         if self.mode is not None and service_pb2:
-            if self.mode == service_pb2.SchemaMode.DATA_ONLY:
+            if self.mode == service_pb2.SchemaMode.DATA_FIRST:
                 raise ValueError(
-                    "Cannot register models in DATA_ONLY mode. Use CODE_STRICT or HYBRID."
+                    "Cannot register models in DATA_FIRST mode. Use CODE_FIRST or HYBRID."
                 )
 
         # Here we would convert the model to schema and register it
@@ -134,7 +134,7 @@ class RoamClient:
     def execute_query(self, query: str, limit: int = 100) -> Any:
         """
         Executes a raw SQL query against the backend.
-        Used primarily in DATA_ONLY mode.
+        Used primarily in DATA_FIRST mode.
         """
         if not self.connected:
             raise RuntimeError("Client not connected")

@@ -14,6 +14,6 @@ def test_schema_mode_enum_exists():
     # Verify specific enum exists and values match
     # Direct access will raise AttributeError if missing (Standard TDD behavior)
     assert service_pb2.SchemaMode
-    assert service_pb2.SchemaMode.Value("DATA_ONLY") == 0
-    assert service_pb2.SchemaMode.Value("CODE_STRICT") == 1
+    assert service_pb2.SchemaMode.Value("DATA_FIRST") == 0
+    assert service_pb2.SchemaMode.Value("CODE_FIRST") == 1
     assert service_pb2.SchemaMode.Value("HYBRID") == 2
