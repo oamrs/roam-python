@@ -32,6 +32,10 @@ packages = ["roam_sdk"]
 
 [dependency-groups]
 dev = [
+    "email-validator>=2.3.0",
+    "faker>=37.12.0",
+    "mysql-connector-python>=9.4.0",
+    "pydantic-extra-types>=2.11.0",
     "types-grpcio>=1.0.0.20251009",
     "types-protobuf>=6.32.1.20251210",
 ]

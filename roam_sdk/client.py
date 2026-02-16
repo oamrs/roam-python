@@ -100,6 +100,42 @@ class RoamClient:
         if not hasattr(model_class, "to_roam_schema"):
             raise ValueError("Model must inherit from RoamDeclarativeBase")
 
+        # Here we would convert the model to schema and register it
+        # For now, just return True
+        return True
+
+    def execute_query(self, query: str, limit: int = 100) -> Any:
+        """
+        Executes a raw SQL query against the backend.
+        Used primarily in DATA_ONLY mode.
+        """
+        if not self.connected:
+            raise RuntimeError("Client not connected")
+
+        # Create the Query Service stub if not already created
+        # In a real app, we might do this in connect(), but v1.query might be optional
+        try:
+            from .v1.query import service_pb2 as query_pb2
+            from .v1.query import service_pb2_grpc as query_grpc
+        except ImportError:
+            raise ImportError("Query service protos not found")
+
+        query_stub = query_grpc.QueryServiceStub(self.channel)
+
+        req = query_pb2.ExecuteQueryRequest(
+            db_identifier="default",  # In the future this could be configurable
+            query=query,
+            limit=limit,
+        )
+
+        try:
+            response = query_stub.ExecuteQuery(req)
+            return response
+        except grpc.RpcError as e:
+            # Handle gRPC errors (e.g. re-raise as SDK specific error)
+            raise e
+            raise ValueError("Model must inherit from RoamDeclarativeBase")
+
         tool_def = model_class.to_roam_schema()
         return self.register_tool(tool_def)
 
