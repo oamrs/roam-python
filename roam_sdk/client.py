@@ -65,6 +65,7 @@ class RoamClient:
         self.channel = None
         self.stub = None
         self.connected = False
+        self.mode = None
 
     def connect(self):
         """Establishes gRPC channel."""
@@ -85,6 +86,25 @@ class RoamClient:
         self.connected = True
         return True
 
+    def register(self, agent_id: str, version: str, mode: int) -> Any:
+        """
+        High-level wrapper to register this agent with the backend.
+        Stores the SchemaMode state for local validation.
+        """
+        if not self.connected:
+            self.connect()
+
+        if service_pb2:
+            req = service_pb2.ConnectRequest(
+                agent_id=agent_id, version=version, mode=mode
+            )
+            # Use the stub to make the call
+            resp = self.stub.Register(req)
+            if resp.success:
+                self.mode = mode
+            return resp
+        return None
+
     def register_tool(self, tool_def: dict) -> bool:
         """
         Registers a tool definition with the OAM agent.
@@ -99,6 +119,13 @@ class RoamClient:
         """
         if not hasattr(model_class, "to_roam_schema"):
             raise ValueError("Model must inherit from RoamDeclarativeBase")
+
+        # Check for Check for DATA_ONLY mode violation
+        if self.mode is not None and service_pb2:
+            if self.mode == service_pb2.SchemaMode.DATA_ONLY:
+                raise ValueError(
+                    "Cannot register models in DATA_ONLY mode. Use CODE_STRICT or HYBRID."
+                )
 
         # Here we would convert the model to schema and register it
         # For now, just return True

@@ -1,3 +1,5 @@
+import pytest
+
 from roam_sdk.v1.agent import service_pb2
 
 
@@ -21,3 +23,21 @@ def test_data_only_integration(roaming_client, fake_user, db_session):
 
     assert result.status == 1
     assert result.row_count >= 0
+
+
+def test_data_only_cannot_register_models(roaming_client):
+    """
+    GIVEN a client connected in DATA_ONLY mode
+    WHEN attempting to register a SQLAlchemy model
+    THEN it should raise a ValueError (or warning) because DATA_ONLY relies on introspection
+    """
+    from tests.conftest import UserDeclarativeBase
+
+    roaming_client.register(
+        agent_id="data-only-fail-register",
+        version="0.1",
+        mode=service_pb2.SchemaMode.DATA_ONLY,
+    )
+
+    with pytest.raises(ValueError, match="Cannot register models in DATA_ONLY mode"):
+        roaming_client.register_model(UserDeclarativeBase)
