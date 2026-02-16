@@ -1,7 +1,9 @@
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Type
 
 import grpc
 from pydantic import BaseModel
+
+from .sql_alchemy import RoamDeclarativeBase
 
 # Import generated gRPC code relative to this file
 # Note: real implementation would need to handle import paths carefully
@@ -87,11 +89,19 @@ class RoamClient:
         """
         Registers a tool definition with the OAM agent.
         """
-        if not self.connected:
-            self.connect()
         # In a real implementation, this would call a gRPC method
         # e.g. self.stub.RegisterTool(tool_def)
         return True
+
+    def register_model(self, model_class: Type[RoamDeclarativeBase]) -> bool:
+        """
+        Registers a SQLAlchemy model (with RoamDeclarativeBase) with the OAM agent.
+        """
+        if not hasattr(model_class, "to_roam_schema"):
+            raise ValueError("Model must inherit from RoamDeclarativeBase")
+
+        tool_def = model_class.to_roam_schema()
+        return self.register_tool(tool_def)
 
     def close(self):
         if self.channel:

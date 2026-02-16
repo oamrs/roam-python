@@ -5,7 +5,7 @@ import warnings
 
 import grpc
 
-from . import service_pb2 as v1_dot_agent_dot_service__pb2
+from . import service_pb2 as v1_dot_query_dot_service__pb2
 
 GRPC_GENERATED_VERSION = "1.69.0"
 GRPC_VERSION = grpc.__version__
@@ -23,14 +23,14 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f"The grpc package installed is at version {GRPC_VERSION},"
-        + f" but the generated code in v1/agent/service_pb2_grpc.py depends on"
+        + f" but the generated code in v1/query/service_pb2_grpc.py depends on"
         + f" grpcio>={GRPC_GENERATED_VERSION}."
         + f" Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}"
         + f" or downgrade your generated code using grpcio-tools<={GRPC_VERSION}."
     )
 
 
-class AgentServiceStub(object):
+class QueryServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -39,62 +39,62 @@ class AgentServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Register = channel.unary_unary(
-            "/v1.agent.AgentService/Register",
-            request_serializer=v1_dot_agent_dot_service__pb2.ConnectRequest.SerializeToString,
-            response_deserializer=v1_dot_agent_dot_service__pb2.ConnectResponse.FromString,
+        self.ExecuteQuery = channel.unary_unary(
+            "/v1.query.QueryService/ExecuteQuery",
+            request_serializer=v1_dot_query_dot_service__pb2.ExecuteQueryRequest.SerializeToString,
+            response_deserializer=v1_dot_query_dot_service__pb2.ExecuteQueryResponse.FromString,
             _registered_method=True,
         )
-        self.StreamEvents = channel.unary_stream(
-            "/v1.agent.AgentService/StreamEvents",
-            request_serializer=v1_dot_agent_dot_service__pb2.EventStreamRequest.SerializeToString,
-            response_deserializer=v1_dot_agent_dot_service__pb2.Event.FromString,
+        self.ValidateQuery = channel.unary_unary(
+            "/v1.query.QueryService/ValidateQuery",
+            request_serializer=v1_dot_query_dot_service__pb2.ValidateQueryRequest.SerializeToString,
+            response_deserializer=v1_dot_query_dot_service__pb2.ValidationResponse.FromString,
             _registered_method=True,
         )
 
 
-class AgentServiceServicer(object):
+class QueryServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Register(self, request, context):
+    def ExecuteQuery(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
-    def StreamEvents(self, request, context):
+    def ValidateQuery(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details("Method not implemented!")
         raise NotImplementedError("Method not implemented!")
 
 
-def add_AgentServiceServicer_to_server(servicer, server):
+def add_QueryServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-        "Register": grpc.unary_unary_rpc_method_handler(
-            servicer.Register,
-            request_deserializer=v1_dot_agent_dot_service__pb2.ConnectRequest.FromString,
-            response_serializer=v1_dot_agent_dot_service__pb2.ConnectResponse.SerializeToString,
+        "ExecuteQuery": grpc.unary_unary_rpc_method_handler(
+            servicer.ExecuteQuery,
+            request_deserializer=v1_dot_query_dot_service__pb2.ExecuteQueryRequest.FromString,
+            response_serializer=v1_dot_query_dot_service__pb2.ExecuteQueryResponse.SerializeToString,
         ),
-        "StreamEvents": grpc.unary_stream_rpc_method_handler(
-            servicer.StreamEvents,
-            request_deserializer=v1_dot_agent_dot_service__pb2.EventStreamRequest.FromString,
-            response_serializer=v1_dot_agent_dot_service__pb2.Event.SerializeToString,
+        "ValidateQuery": grpc.unary_unary_rpc_method_handler(
+            servicer.ValidateQuery,
+            request_deserializer=v1_dot_query_dot_service__pb2.ValidateQueryRequest.FromString,
+            response_serializer=v1_dot_query_dot_service__pb2.ValidationResponse.SerializeToString,
         ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-        "v1.agent.AgentService", rpc_method_handlers
+        "v1.query.QueryService", rpc_method_handlers
     )
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers("v1.agent.AgentService", rpc_method_handlers)
+    server.add_registered_method_handlers("v1.query.QueryService", rpc_method_handlers)
 
 
 # This class is part of an EXPERIMENTAL API.
-class AgentService(object):
+class QueryService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Register(
+    def ExecuteQuery(
         request,
         target,
         options=(),
@@ -109,9 +109,9 @@ class AgentService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            "/v1.agent.AgentService/Register",
-            v1_dot_agent_dot_service__pb2.ConnectRequest.SerializeToString,
-            v1_dot_agent_dot_service__pb2.ConnectResponse.FromString,
+            "/v1.query.QueryService/ExecuteQuery",
+            v1_dot_query_dot_service__pb2.ExecuteQueryRequest.SerializeToString,
+            v1_dot_query_dot_service__pb2.ExecuteQueryResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -124,7 +124,7 @@ class AgentService(object):
         )
 
     @staticmethod
-    def StreamEvents(
+    def ValidateQuery(
         request,
         target,
         options=(),
@@ -136,12 +136,12 @@ class AgentService(object):
         timeout=None,
         metadata=None,
     ):
-        return grpc.experimental.unary_stream(
+        return grpc.experimental.unary_unary(
             request,
             target,
-            "/v1.agent.AgentService/StreamEvents",
-            v1_dot_agent_dot_service__pb2.EventStreamRequest.SerializeToString,
-            v1_dot_agent_dot_service__pb2.Event.FromString,
+            "/v1.query.QueryService/ValidateQuery",
+            v1_dot_query_dot_service__pb2.ValidateQueryRequest.SerializeToString,
+            v1_dot_query_dot_service__pb2.ValidationResponse.FromString,
             options,
             channel_credentials,
             insecure,
