@@ -4,8 +4,13 @@ import pytest
 from faker import Faker
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import Boolean, ForeignKey, Integer, String, create_engine
-from sqlalchemy.orm import (DeclarativeBase, Mapped, mapped_column,
-                            relationship, sessionmaker)
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    mapped_column,
+    relationship,
+    sessionmaker,
+)
 
 from roam_sdk.client import RoamClient
 from roam_sdk.sql_alchemy import RoamDeclarativeBase

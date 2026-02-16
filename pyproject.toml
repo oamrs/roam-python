@@ -38,4 +38,15 @@ dev = [
     "pydantic-extra-types>=2.11.0",
     "types-grpcio>=1.0.0.20251009",
     "types-protobuf>=6.32.1.20251210",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "grpcio-tools>=1.50.0",
 ]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+line_length = 88
