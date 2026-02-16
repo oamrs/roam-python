@@ -3,8 +3,9 @@ import os
 import pytest
 from faker import Faker
 from pydantic import BaseModel, EmailStr
-from sqlalchemy import Boolean, Integer, String, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy import Boolean, ForeignKey, Integer, String, create_engine
+from sqlalchemy.orm import (DeclarativeBase, Mapped, mapped_column,
+                            relationship, sessionmaker)
 
 from roam_sdk.client import RoamClient
 from roam_sdk.sql_alchemy import RoamDeclarativeBase
@@ -16,11 +17,30 @@ class UserBaseModel(BaseModel):
     email: EmailStr
     age: int
     is_active: bool = True
+    organization_id: int | None = None
 
 
 # --- SQLAlchemy Model (The "UserDeclarativeBase") ---
 class Base(DeclarativeBase, RoamDeclarativeBase):
     pass
+
+
+class OrganizationDeclarativeBase(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+
+    # Relationship
+    users = relationship("UserDeclarativeBase", back_populates="organization")
+
+    @classmethod
+    def save(cls, session, name: str) -> "OrganizationDeclarativeBase":
+        org = cls(name=name)
+        session.add(org)
+        session.commit()
+        session.refresh(org)
+        return org
 
 
 class UserDeclarativeBase(Base):
@@ -31,6 +51,9 @@ class UserDeclarativeBase(Base):
     email: Mapped[str] = mapped_column(String, unique=True)
     age: Mapped[int] = mapped_column(Integer)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    organization_id: Mapped[int | None] = mapped_column(ForeignKey("organizations.id"))
+    organization = relationship("OrganizationDeclarativeBase", back_populates="users")
 
     @classmethod
     def save(cls, session, user_data: UserBaseModel) -> "UserDeclarativeBase":

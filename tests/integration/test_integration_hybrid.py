@@ -47,24 +47,25 @@ def test_hybrid_queries_registered_table(roaming_client, db_session, fake_user):
 def test_hybrid_queries_unregistered_table(roaming_client, db_session):
     """
     GIVEN a client in HYBRID mode
-    WHEN querying a table that exists in DB but is NOT registered locally
-    THEN it should succeed (fallback to introspection/legacy data), unlike CODE_FIRST
+    WHEN querying a table (organizations) that exists in DB but is NOT registered locally
+    THEN it should succeed (fallback to introspection), unlike CODE_FIRST
     """
-    # Ideally we'd have a second table for this, but we can just skip registering 'users'
-    # for this specific agent session.
+    from tests.conftest import OrganizationDeclarativeBase
+
+    # Create an organization (backend data existence)
+    OrganizationDeclarativeBase.save(db_session, name="Shadow Corp")
 
     roaming_client.register(
-        agent_id="test-hybrid-query-unregistered",
+        agent_id="test-hybrid-query-unregistered-org",
         version="0.1",
         mode=service_pb2.SchemaMode.HYBRID,
     )
 
-    # We DO NOT call register_model(UserDeclarativeBase) here
-    # But the table 'users' exists in the backend DB from previous tests/fixtures
+    # We DO NOT call register_model(OrganizationDeclarativeBase) here
 
-    query = "SELECT * FROM users"
+    query = "SELECT * FROM organizations"
     result = roaming_client.execute_query(query)
 
     # Logic check: Should pass in HYBRID, would fail in CODE_FIRST
     assert result.status == 1
-    assert result.row_count >= 0
+    assert result.row_count >= 1
