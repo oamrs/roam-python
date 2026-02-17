@@ -18,7 +18,7 @@ def test_code_first_valid_registration(roaming_client, db_session, fake_user):
         version="0.1",
         mode=service_pb2.SchemaMode.CODE_FIRST,
     )
-    roaming_client.register_model(UserDeclarativeBase) is True
+    assert roaming_client.register_model(UserDeclarativeBase) is True
     query = "SELECT * FROM users"
     result = roaming_client.execute_query(query)
 

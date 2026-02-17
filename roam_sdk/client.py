@@ -121,7 +121,7 @@ class RoamClient:
         if not hasattr(model_class, "to_roam_schema"):
             raise ValueError("Model must inherit from RoamDeclarativeBase")
 
-        # Check for Check for DATA_FIRST mode violation
+        # Check for DATA_FIRST mode violation
         if self.mode is not None and service_pb2:
             if self.mode == service_pb2.SchemaMode.DATA_FIRST:
                 raise ValueError(
@@ -151,7 +151,8 @@ class RoamClient:
             import re
 
             # Basic extraction of table names (Words after FROM or JOIN)
-            # NOTE: This is a simplistic check for the SDK PoC.
+            # TODO: This is a simplistic check for the SDK PoC and is easily bypassed.
+            # It misses subqueries, CTEs, aliases, and schema-qualified tables.
             # Real implementation must use sqlglot or rely on the Roam Backend validation.
             # Find all table references
             matches = re.finditer(
@@ -187,10 +188,6 @@ class RoamClient:
         except grpc.RpcError as e:
             # Handle gRPC errors (e.g. re-raise as SDK specific error)
             raise e
-            raise ValueError("Model must inherit from RoamDeclarativeBase")
-
-        tool_def = model_class.to_roam_schema()
-        return self.register_tool(tool_def)
 
     def close(self):
         if self.channel:
