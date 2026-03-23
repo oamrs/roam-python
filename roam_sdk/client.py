@@ -66,7 +66,9 @@ class RoamClient:
         self.stub = None
         self.connected = False
         self.mode = None
+        self.session_id: Optional[str] = None
         self.registered_tables = set()
+        self.query_context: dict[str, Any] = {}
 
     def connect(self):
         """Establishes gRPC channel."""
@@ -103,8 +105,68 @@ class RoamClient:
             resp = self.stub.Register(req)
             if resp.success:
                 self.mode = mode
+                self.session_id = resp.session_id
             return resp
         return None
+
+    def set_query_context(
+        self,
+        *,
+        organization_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        tool_name: Optional[str] = None,
+        tool_intent: Optional[str] = None,
+        grants: Optional[list[str]] = None,
+        prompt_hook_id: Optional[str] = None,
+        prompt_selector_key: Optional[str] = None,
+        domain_tags: Optional[list[str]] = None,
+        table_names: Optional[list[str]] = None,
+    ) -> None:
+        self.query_context = {
+            "organization_id": organization_id,
+            "user_id": user_id,
+            "tool_name": tool_name,
+            "tool_intent": tool_intent,
+            "grants": grants or [],
+            "prompt_hook_id": prompt_hook_id,
+            "prompt_selector_key": prompt_selector_key,
+            "domain_tags": domain_tags or [],
+            "table_names": table_names or [],
+        }
+
+    def clear_query_context(self) -> None:
+        self.query_context = {}
+
+    def _query_metadata(self) -> list[tuple[str, str]]:
+        metadata: list[tuple[str, str]] = []
+
+        if self.session_id:
+            metadata.append(("x-roam-session-id", self.session_id))
+
+        scalar_fields = {
+            "x-roam-organization-id": self.query_context.get("organization_id"),
+            "x-roam-user-id": self.query_context.get("user_id"),
+            "x-roam-tool-name": self.query_context.get("tool_name"),
+            "x-roam-tool-intent": self.query_context.get("tool_intent"),
+            "x-roam-prompt-hook-id": self.query_context.get("prompt_hook_id"),
+            "x-roam-prompt-selector-key": self.query_context.get("prompt_selector_key"),
+        }
+
+        for key, value in scalar_fields.items():
+            if value:
+                metadata.append((key, value))
+
+        list_fields = {
+            "x-roam-grants": self.query_context.get("grants") or [],
+            "x-roam-domain-tags": self.query_context.get("domain_tags") or [],
+            "x-roam-table-names": self.query_context.get("table_names") or [],
+        }
+
+        for key, values in list_fields.items():
+            if values:
+                metadata.append((key, ",".join(values)))
+
+        return metadata
 
     def register_tool(self, tool_def: dict) -> bool:
         """
@@ -183,7 +245,7 @@ class RoamClient:
         )
 
         try:
-            response = query_stub.ExecuteQuery(req)
+            response = query_stub.ExecuteQuery(req, metadata=self._query_metadata())
             return response
         except grpc.RpcError as e:
             # Handle gRPC errors (e.g. re-raise as SDK specific error)

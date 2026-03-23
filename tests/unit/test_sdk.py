@@ -71,3 +71,32 @@ def test_connect_missing_stubs():
         # The client should suggest running the generation command
         with pytest.raises(ImportError, match="Run 'roam proto gen'"):
             client.connect()
+
+
+def test_query_metadata_includes_session_and_prompt_context():
+    client = RoamClient()
+    client.session_id = "session-123"
+    client.set_query_context(
+        organization_id="finance",
+        user_id="user-1",
+        tool_name="finance.query",
+        tool_intent="read_select",
+        grants=["read:ledger", "read:org"],
+        prompt_hook_id="hook-1",
+        prompt_selector_key="finance-default",
+        domain_tags=["finance", "accounting"],
+        table_names=["ledger_entries", "organizations"],
+    )
+
+    metadata = dict(client._query_metadata())
+
+    assert metadata["x-roam-session-id"] == "session-123"
+    assert metadata["x-roam-organization-id"] == "finance"
+    assert metadata["x-roam-user-id"] == "user-1"
+    assert metadata["x-roam-tool-name"] == "finance.query"
+    assert metadata["x-roam-tool-intent"] == "read_select"
+    assert metadata["x-roam-grants"] == "read:ledger,read:org"
+    assert metadata["x-roam-prompt-hook-id"] == "hook-1"
+    assert metadata["x-roam-prompt-selector-key"] == "finance-default"
+    assert metadata["x-roam-domain-tags"] == "finance,accounting"
+    assert metadata["x-roam-table-names"] == "ledger_entries,organizations"
