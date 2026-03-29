@@ -82,8 +82,8 @@ def test_query_metadata_includes_session_and_prompt_context():
         tool_name="finance.query",
         tool_intent="read_select",
         grants=["read:ledger", "read:org"],
-        prompt_hook_id="hook-1",
-        prompt_selector_key="finance-default",
+        runtime_augmentation_id="hook-1",
+        runtime_augmentation_key="finance-default",
         domain_tags=["finance", "accounting"],
         table_names=["ledger_entries", "organizations"],
     )
@@ -96,7 +96,7 @@ def test_query_metadata_includes_session_and_prompt_context():
     assert metadata["x-roam-tool-name"] == "finance.query"
     assert metadata["x-roam-tool-intent"] == "read_select"
     assert metadata["x-roam-grants"] == "read:ledger,read:org"
-    assert metadata["x-roam-prompt-hook-id"] == "hook-1"
-    assert metadata["x-roam-prompt-selector-key"] == "finance-default"
+    assert metadata["x-roam-runtime-augmentation-id"] == "hook-1"
+    assert metadata["x-roam-runtime-augmentation-key"] == "finance-default"
     assert metadata["x-roam-domain-tags"] == "finance,accounting"
     assert metadata["x-roam-table-names"] == "ledger_entries,organizations"

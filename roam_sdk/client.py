@@ -117,8 +117,8 @@ class RoamClient:
         tool_name: Optional[str] = None,
         tool_intent: Optional[str] = None,
         grants: Optional[list[str]] = None,
-        prompt_hook_id: Optional[str] = None,
-        prompt_selector_key: Optional[str] = None,
+        runtime_augmentation_id: Optional[str] = None,
+        runtime_augmentation_key: Optional[str] = None,
         domain_tags: Optional[list[str]] = None,
         table_names: Optional[list[str]] = None,
     ) -> None:
@@ -128,8 +128,8 @@ class RoamClient:
             "tool_name": tool_name,
             "tool_intent": tool_intent,
             "grants": grants or [],
-            "prompt_hook_id": prompt_hook_id,
-            "prompt_selector_key": prompt_selector_key,
+            "runtime_augmentation_id": runtime_augmentation_id,
+            "runtime_augmentation_key": runtime_augmentation_key,
             "domain_tags": domain_tags or [],
             "table_names": table_names or [],
         }
@@ -140,11 +140,8 @@ class RoamClient:
     def _query_metadata(self) -> list[tuple[str, str]]:
         metadata: list[tuple[str, str]] = []
 
-        # TODO: Keep this metadata contract in sync with the C# SDK.
-        # Python currently carries richer per-query context (session, user, org, tool,
-        # grants, prompt hook, domain tags, table names), while the C# SDK only forwards
-        # the API key today. If the SDKs are meant to be feature-parity clients, the
-        # shared contract should be defined once and implemented in both languages.
+        # TODO: Keep this metadata contract aligned across first-party SDKs so the
+        # public request context behaves consistently for Python and .NET clients.
         if self.session_id:
             metadata.append(("x-roam-session-id", self.session_id))
 
@@ -153,8 +150,12 @@ class RoamClient:
             "x-roam-user-id": self.query_context.get("user_id"),
             "x-roam-tool-name": self.query_context.get("tool_name"),
             "x-roam-tool-intent": self.query_context.get("tool_intent"),
-            "x-roam-prompt-hook-id": self.query_context.get("prompt_hook_id"),
-            "x-roam-prompt-selector-key": self.query_context.get("prompt_selector_key"),
+            "x-roam-runtime-augmentation-id": self.query_context.get(
+                "runtime_augmentation_id"
+            ),
+            "x-roam-runtime-augmentation-key": self.query_context.get(
+                "runtime_augmentation_key"
+            ),
         }
 
         for key, value in scalar_fields.items():
@@ -217,11 +218,9 @@ class RoamClient:
         if self.mode == service_pb2.SchemaMode.CODE_FIRST:
             import re
 
-            # Basic extraction of table names (Words after FROM or JOIN)
-            # TODO: This is a simplistic check for the SDK PoC and is easily bypassed.
-            # It misses subqueries, CTEs, aliases, and schema-qualified tables.
-            # Real implementation must use sqlglot or rely on the Roam Backend validation.
-            # Find all table references
+            # Basic extraction of table names (words after FROM or JOIN).
+            # This lightweight pre-check is meant for local developer feedback only;
+            # authoritative validation belongs to the service runtime.
             matches = re.finditer(
                 r"(?:FROM|JOIN)\s+([a-zA-Z0-9_]+)", query, re.IGNORECASE
             )
