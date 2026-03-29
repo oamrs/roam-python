@@ -140,6 +140,11 @@ class RoamClient:
     def _query_metadata(self) -> list[tuple[str, str]]:
         metadata: list[tuple[str, str]] = []
 
+        # TODO: Keep this metadata contract in sync with the C# SDK.
+        # Python currently carries richer per-query context (session, user, org, tool,
+        # grants, prompt hook, domain tags, table names), while the C# SDK only forwards
+        # the API key today. If the SDKs are meant to be feature-parity clients, the
+        # shared contract should be defined once and implemented in both languages.
         if self.session_id:
             metadata.append(("x-roam-session-id", self.session_id))
 
