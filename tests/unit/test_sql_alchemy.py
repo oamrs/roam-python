@@ -30,7 +30,9 @@ class Employee(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String, unique=True)
     department_id: Mapped[int] = mapped_column(ForeignKey("departments.id"))
-    role: Mapped[str] = mapped_column(Enum("engineer", "manager", "director", name="role_enum"))
+    role: Mapped[str] = mapped_column(
+        Enum("engineer", "manager", "director", name="role_enum")
+    )
 
 
 def test_roam_schema_generation():
