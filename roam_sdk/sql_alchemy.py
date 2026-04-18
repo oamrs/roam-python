@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional
 
 try:
+    from sqlalchemy import Enum as SAEnum
     from sqlalchemy.inspection import inspect
     from sqlalchemy.orm import DeclarativeBase, declared_attr
-    from sqlalchemy import Enum as SAEnum
 except ImportError:
     # Allow SDK to be imported without sqlalchemy installed (for lightweight agents)
     inspect = None
