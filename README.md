@@ -78,6 +78,43 @@ client.register_model(Organization)
 response = client.execute_query("SELECT * FROM organizations")
 ```
 
+### Schema Constraint Mapping
+
+`RoamDeclarativeBase.to_roam_schema()` translates SQLAlchemy column constraints into restrictive JSON Schema rules for LLM tool calls.
+
+| SQLAlchemy constraint | JSON Schema effect |
+|---|---|
+| `primary_key=True` | Description annotated `"Primary Key — auto-generated; omit on INSERT"`; excluded from `required` |
+| `ForeignKey("table.col")` | Description annotated `"Foreign Key → table.col"` |
+| `unique=True` | Description annotated `"UNIQUE — value must be unique across all rows"` |
+| `Enum("a", "b", ...)` | Property emits `"enum": ["a", "b", ...]` |
+| — | `"additionalProperties": False` on every table schema |
+
+```python
+from sqlalchemy import Enum, ForeignKey, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from roam_sdk import RoamDeclarativeBase
+
+class Base(DeclarativeBase, RoamDeclarativeBase):
+    pass
+
+class Department(Base):
+    __tablename__ = "departments"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+
+class Employee(Base):
+    __tablename__ = "employees"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    department_id: Mapped[int] = mapped_column(ForeignKey("departments.id"))
+    role: Mapped[str] = mapped_column(Enum("engineer", "manager", name="role_enum"))
+
+schema = Employee.to_roam_schema()
+# schema["parameters"]["additionalProperties"] == False
+# schema["parameters"]["properties"]["department_id"]["description"] contains "departments.id"
+# schema["parameters"]["properties"]["role"]["enum"] == ["engineer", "manager"]
+```
+
 ## Runtime Context Headers
 
 Attach request context before calling `execute_query`:

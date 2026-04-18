@@ -3,11 +3,13 @@ from typing import Any, Dict, List, Optional
 try:
     from sqlalchemy.inspection import inspect
     from sqlalchemy.orm import DeclarativeBase, declared_attr
+    from sqlalchemy import Enum as SAEnum
 except ImportError:
     # Allow SDK to be imported without sqlalchemy installed (for lightweight agents)
     inspect = None
     DeclarativeBase = object
     declared_attr = property
+    SAEnum = None
 
 
 class RoamDeclarativeBase:
@@ -34,7 +36,12 @@ class RoamDeclarativeBase:
         schema = {
             "name": cls.__tablename__,
             "description": cls.__doc__ or f"Table {cls.__tablename__}",
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": False,
+            },
         }
 
         for column in mapper.columns:
@@ -51,10 +58,26 @@ class RoamDeclarativeBase:
             elif "FLOAT" in col_type or "NUMERIC" in col_type:
                 json_type = "number"
 
-            schema["parameters"]["properties"][col_name] = {
+            description = f"SQL Type: {col_type}"
+
+            if column.primary_key:
+                description += " | Primary Key — auto-generated; omit on INSERT"
+
+            if column.unique:
+                description += " | UNIQUE — value must be unique across all rows"
+
+            for fk in column.foreign_keys:
+                description += f" | Foreign Key → {fk.target_fullname}"
+
+            prop: Dict[str, Any] = {
                 "type": json_type,
-                "description": f"SQL Type: {col_type}",
+                "description": description,
             }
+
+            if SAEnum is not None and isinstance(column.type, SAEnum):
+                prop["enum"] = list(column.type.enums)
+
+            schema["parameters"]["properties"][col_name] = prop
 
             # Required Fields (Non-nullable and not auto-incrementing primary key)
             if not column.nullable and not column.primary_key:
